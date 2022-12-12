@@ -64,7 +64,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define CH1 8
+#define CH1 12
 #define LED 14
 #define PWM_IN_FREQ 400 // Frequency of input signal [Hz]
 
@@ -163,13 +163,10 @@ int main(void) {
       nrf_drv_timer_task_address_get(&TIMER_CH1, NRF_TIMER_TASK_CAPTURE0)); // configure interrupt on ch1_1 to save cnt value in cc0
 
   nrf_drv_ppi_channel_enable(ppi_ch1);
-
-  nrf_gpio_cfg_output(LED_3); // Configure LED as output
   boUART_Init();
   nrf_drv_gpiote_in_event_enable(CH1, true);
 
   printf("Running main loop \r\n");
-
   while (1) {
     if (data_ready == 0b00000001){
       ch1_times.dc = (ch1_times.t2 - ch1_times.t1) * to_dc;
