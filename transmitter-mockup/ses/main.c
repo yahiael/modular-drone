@@ -46,67 +46,19 @@
  * This file contains the source code for a sample application using Timer0.
  *
  */
-
-#include "app_error.h"
-#include "bsp.h"
-#include "deca_device_api.h"
-#include "deca_param_types.h"
-#include "deca_regs.h"
-#include "deca_types.h"
-#include "port_platform.h"
-#include "nrf.h"
-#include "nrf_delay.h"
-#include "nrf_drv_gpiote.h"
-#include "nrf_drv_ppi.h"
-#include "nrf_drv_timer.h"
-#include "nrf_uart.h"
-#include "uart.h"
-#include <stdbool.h>
-#include <stdint.h>
-
-#define CH1 12
-#define PIN_DEBUG 8
-#define LED 14
-#define PWM_IN_FREQ 400 // Frequency of input signal [Hz]
-
-// Static function definition
-static void send_message(uint8 *msg);
-static void timer_ch1_event_handler(nrf_timer_event_t event_type, void *p_context);
-static void timer_reload_handler(nrf_timer_event_t event_type, void *p_context);
-static void ch1_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
-
-typedef struct {
-  uint32_t t1, t2;
-  uint8_t dc;
-} channel_times_t;
-
-uint8_t data_ready = 0b00000000;
-float to_dc = PWM_IN_FREQ / 1e6 * 100; // Scaled to be used when the ton is expressed in us
-uint8_t tx_msg[30] = {0xC5, 0, 0xC6, '0', 'C', 'A', 'W', 'A','C', 'A', 'W', 'A', 'V', 'E', 0, 0};
-
-static dwt_config_t dwt_config = {
-    5,               /* Channel number. */
-    DWT_PRF_64M,     /* Pulse repetition frequency. */
-    DWT_PLEN_128,    /* Preamble length. Used in TX only. */
-    DWT_PAC8,        /* Preamble acquisition chunk size. Used in RX only. */
-    10,              /* TX preamble code. Used in TX only. */
-    10,              /* RX preamble code. Used in RX only. */
-    0,               /* 0 to use standard SFD, 1 to use non-standard SFD. */
-    DWT_BR_6M8,      /* Data rate. */
-    DWT_PHRMODE_STD, /* PHY header mode. */
-    (129 + 8 - 8)    /* SFD timeout (preamble length + 1 + SFD length - PAC size). Used in RX only. */
-};
-
-channel_times_t ch1_times;
-
-const nrf_drv_timer_t TIMER_CH1 = NRF_DRV_TIMER_INSTANCE(0);
-const nrf_drv_timer_t TIMER_RELOAD = NRF_DRV_TIMER_INSTANCE(1);
+#include "main_conf.h"
 
 /**
  * @brief Function for main application entry.
  */
 
 int main(void) {
+uint32_t err_code = NRF_SUCCESS;
+
+  // ---------------- UART INIT ---------------------------------------- //
+  boUART_Init();
+  printf("Transmitter Module \r\n");
+printf("UART SET \r\n");
  // ----------------- DWM initialization ----------------------------------- //
   /* Setup DW1000 IRQ pin */
   nrf_gpio_cfg_input(DW1000_IRQ, NRF_GPIO_PIN_NOPULL); //irq
@@ -128,13 +80,10 @@ int main(void) {
 
   // -------------------- End DWM configuration ----------------------------- //
 
-  boUART_Init();
-  printf("DWM config OK \r\n");
-
-  uint32_t err_code = NRF_SUCCESS;
+  printf("DWM configured\r\n");
 
   //Configure all leds on board.
-  bsp_board_leds_init();
+  //bsp_board_leds_init();
 
   // TIMER Configuration
   // You have to check that the timer reload does not occur during a measurement
@@ -143,11 +92,11 @@ int main(void) {
   err_code = nrf_drv_timer_init(&TIMER_CH1, &timer_cfg, timer_ch1_event_handler);
   APP_ERROR_CHECK(err_code);
 
-  uint32_t time_reload_ms = 1000;
-  uint32_t time_reload_ticks = nrf_drv_timer_ms_to_ticks(&TIMER_CH1, time_reload_ms);
+//  uint32_t time_reload_ms = 1000;
+//  uint32_t time_reload_ticks = nrf_drv_timer_ms_to_ticks(&TIMER_CH1, time_reload_ms);
 
   nrf_drv_timer_extended_compare(
-      &TIMER_CH1, NRF_TIMER_CC_CHANNEL0, 4294967295, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
+      &TIMER_CH1, NRF_TIMER_CC_CHANNEL0, UINT32_MAX, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true); // Configure to reload after uint32 max ticks
   nrf_drv_timer_enable(&TIMER_CH1);
 
   // GPIOTE Configuration

@@ -64,6 +64,7 @@
     <folder Name="Application">
       <file file_name="main.c" />
       <file file_name="../config/sdk_config.h" />
+      <file file_name="main_conf.h" />
     </folder>
     <folder Name="Device">
       <file file_name="../../nRF5_SDK_14.2.0_17/components/toolchain/ses/ses_nRF_Startup.s" />
