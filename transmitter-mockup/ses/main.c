@@ -65,6 +65,7 @@
 #include <stdint.h>
 
 #define CH1 12
+#define PIN_DEBUG 8
 #define LED 14
 #define PWM_IN_FREQ 400 // Frequency of input signal [Hz]
 
@@ -166,13 +167,16 @@ int main(void) {
   boUART_Init();
   nrf_drv_gpiote_in_event_enable(CH1, true);
 
+  nrf_gpio_cfg_output(PIN_DEBUG);
+
   printf("Running main loop \r\n");
   while (1) {
     if (data_ready == 0b00000001){
-      ch1_times.dc = (ch1_times.t2 - ch1_times.t1) * to_dc;
+      ch1_times.dc = 100 - (ch1_times.t1 - ch1_times.t2) * to_dc;
       tx_msg[1] = ch1_times.dc;
       data_ready = data_ready & 0b11111110; // Reset the last bit
       send_message(tx_msg); // Send data and wait
+      nrf_gpio_pin_toggle(PIN_DEBUG);
 //      printf("Ton duration: %d[ms], \tDuty cycle is: %d[%%] \r\n",  (ch1_times.t2-ch1_times.t1)/1000, ch1_times.dc);
 
     }
@@ -210,12 +214,13 @@ static void ch1_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action) 
     if (nrf_gpio_pin_read(CH1)) {
       NRF_TIMER0->TASKS_CAPTURE[0] = 0;
       ch1_times.t1 = NRF_TIMER0->CC[0];
+      data_ready = data_ready | 0b00000001;
+
 //      printf("Interrupt Low to High -- %d\r\n", ch1_times.t2);
 
     } else {
       NRF_TIMER0->TASKS_CAPTURE[0] = 0;
       ch1_times.t2 = NRF_TIMER0->CC[0];
-      data_ready = data_ready | 0b00000001;
 //      printf("Interrupt High to Low -- %d\r\n", ch1_times.t1);
     }
   }

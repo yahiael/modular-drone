@@ -59,6 +59,7 @@ nrf_pwm_sequence_t const seq =
 // Define the IO
 #define FRAME_LEN_MAX 127
 #define CH 12
+#define PIN_DEBUG 8
 
 // Static declaration
 static void print_msg(uint8 *msg, int n);
@@ -117,6 +118,7 @@ int main(void) {
   // Loop forever responding to ranging requests.
 
   nrf_gpio_cfg_output(CH);
+  nrf_gpio_cfg_output(PIN_DEBUG);
   uint32_t T = 1 / PWM_IN_FREQ * 1e6; // Scaled to be used when the ton is expressed in us
 
   // Set up the PWM peripheral and sequence
@@ -171,6 +173,7 @@ int main(void) {
       if (new_data == 1) {
         print_msg(&rx_buffer, frame_len);
         seq_values->channel_0 = (100 - rx_buffer[1]) * 2500 / 100;
+        nrf_gpio_pin_toggle(PIN_DEBUG);
       }
 
       new_data = 0;
