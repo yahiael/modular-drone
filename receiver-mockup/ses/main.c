@@ -101,6 +101,9 @@ int main(void) {
   //-------------dw1000  ini------end---------------------------
   // IF WE GET HERE THEN THE LEDS WILL BLINK
 
+  uint32_t cnt = 0;
+  uint32_t cnt_print = 40;
+
   nrf_gpio_cfg_output(CH);
   nrf_gpio_cfg_output(PIN_DEBUG);
   uint32_t T = 1 / PWM_IN_FREQ * 1e6; // Scaled to be used when the ton is expressed in us
@@ -153,13 +156,16 @@ int main(void) {
       }
 
       if (new_data == 1) {
-        print_msg(&rx_buffer, frame_len);
+ //       if(cnt%cnt_print ==0){
+ //         print_msg(&rx_buffer, frame_len);
+ //         }
+ //        cnt++;
         for (int i = 0; i < FRAME_LEN_MAX; i++)
         {
           if (rx_buffer[i] == RECEIVER_ADDR)
           {
             seq_values->channel_0 = (100 - rx_buffer[i+1]) * T / 100;
-            printf("Done \r\n");
+            printf("valore %d\r\n",rx_buffer[i+1]);
             nrf_gpio_pin_toggle(PIN_DEBUG);
             break;
           }
