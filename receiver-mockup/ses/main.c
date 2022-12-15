@@ -159,6 +159,7 @@ int main(void) {
           if (rx_buffer[i] == RECEIVER_ADDR)
           {
             seq_values->channel_0 = (100 - rx_buffer[i+1]) * T / 100;
+            printf("Done \r\n");
             nrf_gpio_pin_toggle(PIN_DEBUG);
             break;
           }
