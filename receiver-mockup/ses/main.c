@@ -34,7 +34,7 @@ static dwt_config_t config = {
 
 static nrf_drv_pwm_t m_pwm0 = NRF_DRV_PWM_INSTANCE(0);
 
-// Declare variables holding PWM sequence values. In this example only one channel is used
+// Declare variables holding PWM sequence values. Only one channel is used
 nrf_pwm_values_individual_t seq_values[] = {0, 0, 0, 0};
 nrf_pwm_sequence_t const seq =
     {
@@ -97,13 +97,12 @@ int main(void) {
 
   /* Configure DW1000. */
   dwt_configure(&config);
-  //  dwt_setrxtimeout(65000); // Maximum value timeout with DW1000 is 65ms
 
   //-------------dw1000  ini------end---------------------------
   // IF WE GET HERE THEN THE LEDS WILL BLINK
 
-  // No RTOS task here so just call the main loop here.
-  // Loop forever responding to ranging requests.
+  uint32_t cnt = 0;
+  uint32_t cnt_print = 40;
 
   nrf_gpio_cfg_output(CH);
   nrf_gpio_cfg_output(PIN_DEBUG);
@@ -137,9 +136,7 @@ int main(void) {
       /* Activate reception immediately. */
       dwt_rxenable(DWT_START_RX_IMMEDIATE);
 
-      /* Poll until a frame is properly received or an error/timeout occurs. See NOTE 4 below.
-         * STATUS register is 5 bytes long but, as the event we are looking at is in the first byte of the register, we can use this simplest API
-         * function to access it. */
+      /* Poll until a frame is properly received or an error/timeout occurs. */
       while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG | SYS_STATUS_ALL_RX_ERR))) {
       };
 
@@ -159,12 +156,16 @@ int main(void) {
       }
 
       if (new_data == 1) {
-        print_msg(&rx_buffer, frame_len);
+ //       if(cnt%cnt_print ==0){
+ //         print_msg(&rx_buffer, frame_len);
+ //         }
+ //        cnt++;
         for (int i = 0; i < FRAME_LEN_MAX; i++)
         {
           if (rx_buffer[i] == RECEIVER_ADDR)
           {
             seq_values->channel_0 = (100 - rx_buffer[i+1]) * T / 100;
+            printf("valore %d\r\n",rx_buffer[i+1]);
             nrf_gpio_pin_toggle(PIN_DEBUG);
             break;
           }
